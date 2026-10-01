@@ -938,11 +938,11 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
     """Desenha a barra lateral e devolve (strength, somente_metadados, parâmetros da emulação ou None)."""
     with st.sidebar:
         secao("Processamento", primeira=True)
-        # Padrões no efeito máximo; em todos os controles, mais à direita = mais forte.
+        # Padrões equilibrados para foto de produto (sem distorção visível); mais à direita = mais forte.
         rotulo = st.selectbox(
             "Intensidade",
             options=list(INTENSIDADES.keys()),
-            index=3,
+            index=1,
             help="\n\n".join(f"**{nome}** — {DETALHES_INTENSIDADE[valor]}" for nome, valor in INTENSIDADES.items()),
         )
         strength = INTENSIDADES[rotulo]
@@ -965,13 +965,16 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
         pos_processamento = None
         if emular and not somente_metadados:
             reducao = st.slider(
-                "Reamostragem (%)", 5, 40, 40, step=5,
+                "Reamostragem (%)", 5, 40, 10, step=5,
                 help="Quanto a imagem é reduzida antes de voltar ao tamanho original. 40% = reduzida para 60%.",
             )
             pos_processamento = {
-                "deslocamento_ca": st.select_slider("Aberração cromática (px)", options=[1, 2], value=2),
+                "deslocamento_ca": st.select_slider(
+                    "Aberração cromática (px)", options=[0, 1, 2], value=0,
+                    help="Franja colorida nas bordas, como em lente real. Visível em bordas de alto contraste a partir de 1 px.",
+                ),
                 "escala_reamostragem": (100 - reducao) / 100,
-                "sigma_grao": st.slider("Grão (σ)", 0.0, 8.0, 8.0, step=0.5),
+                "sigma_grao": st.slider("Grão (σ)", 0.0, 8.0, 2.0, step=0.5),
             }
 
         secao("Avançado")
