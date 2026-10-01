@@ -744,18 +744,13 @@ code, pre, .stCode { font-family: 'JetBrains Mono', ui-monospace, monospace !imp
 
 /* ---------- barra lateral ---------- */
 [data-testid="stSidebar"] { background: var(--superficie); border-right: 1px solid var(--borda); }
-[data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-    font-size: .75rem !important; text-transform: uppercase; letter-spacing: .12em !important;
-    color: var(--texto-2) !important; font-weight: 600 !important; margin-bottom: .25rem;
-}
-[data-testid="stSidebar"] hr { border-color: var(--borda); margin: 1rem 0; }
 /* Barra lateral compacta: todas as opções cabem numa tela sem rolar */
 [data-testid="stSidebarHeader"] { height: 2.2rem; min-height: 0; padding-top: .4rem; padding-bottom: 0; }
 [data-testid="stSidebarUserContent"] { padding-top: 0 !important; padding-bottom: 1rem !important; }
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: .55rem; }
-[data-testid="stSidebar"] h2 { padding: 0 0 .1rem !important; }
-[data-testid="stSidebar"] h3 { padding: .7rem 0 0 !important; border-top: 1px solid var(--borda); margin-top: .2rem; }
-[data-testid="stSidebar"] [data-testid="stSlider"] { padding-bottom: .1rem; }
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: .7rem; }
+.secao { font-size: .95rem; font-weight: 600; color: var(--texto); margin: .9rem 0 0; padding-top: .9rem;
+    border-top: 1px solid var(--borda); }
+.secao.primeira { margin-top: 0; padding-top: 0; border-top: 0; }
 
 /* ---------- cabeçalho ---------- */
 .topo h1 { font-size: 1.9rem !important; font-weight: 700 !important; letter-spacing: -.02em; color: var(--texto) !important;
@@ -803,7 +798,6 @@ code, pre, .stCode { font-family: 'JetBrains Mono', ui-monospace, monospace !imp
 .amb-item.alerta i { background: var(--alerta); }
 .amb-item.erro i { background: var(--erro); }
 .amb-item em { margin-left: auto; font-style: normal; color: var(--texto-2); font-size: .74rem; }
-.detalhe-int { font-size: .78rem; color: var(--texto-2); line-height: 1.5; margin-top: -.2rem; }
 
 /* ---------- grade de miniaturas ---------- */
 [data-testid="stImage"] img { border-radius: 8px; border: 1px solid var(--borda); }
@@ -935,15 +929,23 @@ def cabecalho_resultado(lote: dict) -> None:
         )
 
 
+def secao(titulo: str, primeira: bool = False) -> None:
+    """Título de seção da barra lateral: texto normal, separado do bloco anterior por uma linha."""
+    st.markdown(f"<p class='secao{' primeira' if primeira else ''}'>{titulo}</p>", unsafe_allow_html=True)
+
+
 def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
     """Desenha a barra lateral e devolve (strength, somente_metadados, parâmetros da emulação ou None)."""
     with st.sidebar:
-        st.header("Configuração")
-
-        # Padrões no efeito máximo de cada controle.
-        rotulo = st.selectbox("Intensidade", options=list(INTENSIDADES.keys()), index=3)
+        secao("Processamento", primeira=True)
+        # Padrões no efeito máximo; em todos os controles, mais à direita = mais forte.
+        rotulo = st.selectbox(
+            "Intensidade",
+            options=list(INTENSIDADES.keys()),
+            index=3,
+            help="\n\n".join(f"**{nome}** — {DETALHES_INTENSIDADE[valor]}" for nome, valor in INTENSIDADES.items()),
+        )
         strength = INTENSIDADES[rotulo]
-        st.markdown(f'<div class="detalhe-int">{DETALHES_INTENSIDADE[strength]}</div>', unsafe_allow_html=True)
 
         # O modo --no-metadata do script depende 100% do ExifTool.
         somente_metadados = st.toggle(
@@ -953,24 +955,26 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
             help="Mantém os pixels intactos e remove apenas EXIF/XMP/C2PA. Requer ExifTool instalado.",
         )
 
-        st.subheader("Sensor óptico")
+        secao("Sensor óptico")
         emular = st.toggle(
-            "Aplicar emulação de câmera",
+            "Emular câmera real",
             value=True,
             disabled=somente_metadados,
             help="Aberração cromática, reamostragem bilinear→bicúbica, nitidez nas bordas e grão monocromático.",
         )
         pos_processamento = None
         if emular and not somente_metadados:
+            reducao = st.slider(
+                "Reamostragem (%)", 5, 40, 40, step=5,
+                help="Quanto a imagem é reduzida antes de voltar ao tamanho original. 40% = reduzida para 60%.",
+            )
             pos_processamento = {
                 "deslocamento_ca": st.select_slider("Aberração cromática (px)", options=[1, 2], value=2),
-                "escala_reamostragem": st.slider(
-                    "Reamostragem (%)", 60, 95, 60, step=5, help="Quanto menor, mais forte: a imagem é reduzida mais antes de voltar ao tamanho."
-                ) / 100,
-                "sigma_grao": st.slider("Grão monocromático (σ)", 0.0, 8.0, 8.0, step=0.5),
+                "escala_reamostragem": (100 - reducao) / 100,
+                "sigma_grao": st.slider("Grão (σ)", 0.0, 8.0, 8.0, step=0.5),
             }
 
-        st.subheader("Mais")
+        secao("Avançado")
         with st.expander("Ambiente", expanded=not (ambiente["script"] and ambiente["libs_subprocesso"])):
             itens = [
                 ("ok" if ambiente["script"] else "erro", f"scripts/{SCRIPT_NAME}", "pronto" if ambiente["script"] else "ausente"),
