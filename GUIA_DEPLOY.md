@@ -1,4 +1,4 @@
-﻿# 🚀 Guia de Deploy & Integração: DeAI Image Studio
+# 🚀 Guia de Deploy & Integração: DeAI Image Studio
 
 Este guia explica como colocar seu site no ar na nuvem funcionando **exatamente como no seu computador**, com integração completa ao **Supabase (Storage & Banco de Dados)** e publicação via **Streamlit Cloud** e/ou **Netlify**.
 

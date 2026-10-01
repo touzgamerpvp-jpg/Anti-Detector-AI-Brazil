@@ -1,4 +1,4 @@
-﻿-- ========================================================
+-- ========================================================
 -- Schema Supabase para o DeAI Image Processing
 -- Execute este script no SQL Editor do seu Dashboard Supabase
 -- ========================================================
