@@ -7,3 +7,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 netlify-deploy/node_modules/
+
+# Segredos locais (nunca commitar)
+.streamlit/secrets.toml
+*/.streamlit/secrets.toml
+*/*/.streamlit/secrets.toml
+.env

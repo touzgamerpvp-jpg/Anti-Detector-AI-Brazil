@@ -63,29 +63,33 @@
 
   <script>
     // Cole aqui o link gerado pelo Streamlit Cloud após publicar:
-    const STREAMLIT_APP_URL = "https://share.streamlit.io"; // Altere para a URL pública do seu app
+    const STREAMLIT_APP_URL = ""; // ex: "https://seu-app.streamlit.app"
 
-    const frame = document.createElement("iframe");
-    frame.id = "app-frame";
-    frame.allow = "camera; microphone; clipboard-read; clipboard-write;";
-    frame.src = STREAMLIT_APP_URL;
+    if (!STREAMLIT_APP_URL) {
+      // Sem URL configurada: mostra só as instruções, sem iframe
+      document.querySelector(".spinner").style.display = "none";
+      document.querySelector("#loading > p").style.display = "none";
+      document.getElementById("banner").style.display = "block";
+    } else {
+      // ?embed=true remove o cabeçalho/rodapé do Streamlit Cloud e libera o uso em iframe
+      const src = new URL(STREAMLIT_APP_URL);
+      src.searchParams.set("embed", "true");
 
-    frame.onload = () => {
-      const loader = document.getElementById("loading");
-      if (loader) {
-        loader.style.opacity = "0";
-        setTimeout(() => loader.style.display = "none", 400);
-      }
-    };
+      const frame = document.createElement("iframe");
+      frame.id = "app-frame";
+      frame.allow = "camera; microphone; clipboard-read; clipboard-write;";
+      frame.src = src.toString();
 
-    if (STREAMLIT_APP_URL === "https://share.streamlit.io") {
-      setTimeout(() => {
-        const banner = document.getElementById("banner");
-        if (banner) banner.style.display = "block";
-      }, 2000);
+      frame.onload = () => {
+        const loader = document.getElementById("loading");
+        if (loader) {
+          loader.style.opacity = "0";
+          setTimeout(() => loader.style.display = "none", 400);
+        }
+      };
+
+      document.body.appendChild(frame);
     }
-
-    document.body.appendChild(frame);
   </script>
 </body>
 </html>

@@ -18,6 +18,12 @@ CREATE POLICY "Upload de imagens processadas"
 ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'deai-images');
 
+-- Necessária para o upload com "x-upsert: true" sobrescrever um arquivo de mesmo nome
+CREATE POLICY "Sobrescrever imagens processadas"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'deai-images')
+WITH CHECK (bucket_id = 'deai-images');
+
 -- 2. Tabela de histórico de processamentos
 CREATE TABLE IF NOT EXISTS public.historico_deai (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
