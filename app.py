@@ -715,155 +715,106 @@ def processar_lote(
 # -----------------------------------------------------------------------------
 # Interface
 # -----------------------------------------------------------------------------
-# Visual: fundo "aurora" (três radiais violeta/ciano/magenta sobre quase-preto),
-# superfícies em vidro fosco e o mesmo degradê nos títulos, botões e barra de progresso.
+# Visual: plano e escuro, uma única cor de destaque, sem degradês, vidro ou brilho.
 ESTILO = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-    --bg: #07070d;
-    --vidro: rgba(20, 20, 34, 0.55);
-    --vidro-forte: rgba(16, 16, 28, 0.78);
-    --borda: rgba(255, 255, 255, 0.08);
-    --borda-forte: rgba(167, 139, 250, 0.35);
-    --texto: #e7e7f0;
-    --texto-2: #9a9ab0;
-    --violeta: #8b5cf6;
-    --ciano: #22d3ee;
-    --magenta: #ec4899;
+    --bg: #0e0e14;
+    --superficie: #16161f;
+    --borda: #262633;
+    --texto: #ececf1;
+    --texto-2: #9a9aab;
+    --destaque: #a78bfa;
+    --destaque-hover: #b9a3fb;
     --ok: #34d399;
     --alerta: #fbbf24;
     --erro: #f87171;
-    --degrade: linear-gradient(120deg, #8b5cf6 0%, #ec4899 50%, #22d3ee 100%);
 }
 
-html, body, .stApp, .stMarkdown p, label, input, textarea {
-    font-family: 'Inter', system-ui, sans-serif;
+html, body, .stApp, .stMarkdown p, label, input, textarea, h1, h2, h3, h4 {
+    font-family: 'Inter', system-ui, sans-serif !important;
 }
-h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Inter', sans-serif !important; letter-spacing: -0.02em; }
 code, pre, .stCode { font-family: 'JetBrains Mono', ui-monospace, monospace !important; }
 
-/* ---------- fundo aurora ---------- */
-[data-testid="stAppViewContainer"] {
-    background:
-        radial-gradient(1000px 700px at 30% -15%, rgba(139, 92, 246, 0.38), transparent 60%),
-        radial-gradient(800px 600px at 105% 15%, rgba(34, 211, 238, 0.22), transparent 60%),
-        radial-gradient(900px 700px at 55% 115%, rgba(236, 72, 153, 0.24), transparent 60%),
-        var(--bg);
-    background-attachment: fixed;
-}
-[data-testid="stAppViewContainer"]::before {
-    /* grade sutil que dá textura ao fundo sem competir com o conteúdo */
-    content: ""; position: fixed; inset: 0; pointer-events: none;
-    background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse at 50% 0%, black 30%, transparent 75%);
-}
+[data-testid="stAppViewContainer"] { background: var(--bg); }
 [data-testid="stHeader"] { background: transparent; }
-[data-testid="stMainBlockContainer"], .block-container { padding-top: 2.5rem; max-width: 1180px; }
+[data-testid="stMainBlockContainer"], .block-container { padding-top: 2.5rem; max-width: 1100px; }
 
-/* ---------- barra lateral em vidro ---------- */
-[data-testid="stSidebar"] {
-    background: var(--vidro-forte);
-    backdrop-filter: blur(18px) saturate(140%);
-    border-right: 1px solid var(--borda);
-}
+/* ---------- barra lateral ---------- */
+[data-testid="stSidebar"] { background: var(--superficie); border-right: 1px solid var(--borda); }
 [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-    font-size: 0.78rem !important; text-transform: uppercase; letter-spacing: 0.14em !important;
-    color: var(--texto-2) !important; font-weight: 600 !important; margin-bottom: 0.25rem;
+    font-size: .75rem !important; text-transform: uppercase; letter-spacing: .12em !important;
+    color: var(--texto-2) !important; font-weight: 600 !important; margin-bottom: .25rem;
 }
-[data-testid="stSidebar"] hr { border-color: var(--borda); margin: 1.1rem 0; }
+[data-testid="stSidebar"] hr { border-color: var(--borda); margin: 1rem 0; }
+/* Barra lateral compacta: todas as opções cabem numa tela sem rolar */
+[data-testid="stSidebarHeader"] { height: 2.2rem; min-height: 0; padding-top: .4rem; padding-bottom: 0; }
+[data-testid="stSidebarUserContent"] { padding-top: 0 !important; padding-bottom: 1rem !important; }
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: .55rem; }
+[data-testid="stSidebar"] h2 { padding: 0 0 .1rem !important; }
+[data-testid="stSidebar"] h3 { padding: .7rem 0 0 !important; border-top: 1px solid var(--borda); margin-top: .2rem; }
+[data-testid="stSidebar"] [data-testid="stSlider"] { padding-bottom: .1rem; }
 
-/* ---------- hero ---------- */
-.hero { position: relative; padding: 2.2rem 2.2rem 2rem; border-radius: 22px; margin-bottom: 1.6rem;
-    background: var(--vidro); border: 1px solid var(--borda); backdrop-filter: blur(14px); overflow: hidden; }
-.hero::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
-    background: linear-gradient(120deg, rgba(139,92,246,.6), rgba(236,72,153,.25), rgba(34,211,238,.5));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude; }
-.hero-tag { display: inline-flex; align-items: center; gap: .5rem; font-size: .72rem; font-weight: 600;
-    letter-spacing: .14em; text-transform: uppercase; color: #c4b5fd; padding: .35rem .75rem; border-radius: 999px;
-    background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.3); }
-.hero-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); }
-.hero h1 { font-size: clamp(2rem, 4.2vw, 3.1rem) !important; font-weight: 700 !important; line-height: 1.05 !important;
-    margin: 1rem 0 .7rem !important; padding: 0 !important;
-    background: linear-gradient(120deg, #fff 0%, #ddd6fe 35%, #f0abfc 65%, #67e8f9 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent !important; }
-.hero p { color: var(--texto-2); font-size: 1.02rem; max-width: 680px; margin: 0; line-height: 1.55; }
-.hero-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.3rem; }
-.chip { font-size: .78rem; color: var(--texto); padding: .38rem .8rem; border-radius: 999px;
-    background: rgba(255,255,255,0.04); border: 1px solid var(--borda); }
-.chip b { color: #c4b5fd; font-weight: 600; }
-
-/* ---------- passos (estado vazio) ---------- */
-.passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9rem; margin-top: 1rem; }
-.passo { padding: 1.2rem 1.25rem; border-radius: 16px; background: var(--vidro); border: 1px solid var(--borda); }
-.passo .num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
-    font: 600 .85rem 'Space Grotesk', sans-serif; color: #fff; background: var(--degrade); }
-.passo .tit { margin: .8rem 0 .3rem; font: 600 1rem 'Space Grotesk', sans-serif; color: var(--texto); }
-.passo p { margin: 0; color: var(--texto-2); font-size: .88rem; line-height: 1.5; }
-@media (max-width: 760px) { .passos { grid-template-columns: 1fr; } .hero { padding: 1.5rem; } }
+/* ---------- cabeçalho ---------- */
+.topo h1 { font-size: 1.9rem !important; font-weight: 700 !important; letter-spacing: -.02em; color: var(--texto) !important;
+    margin: 0 0 .35rem !important; padding: 0 !important; line-height: 1.15 !important; }
+.topo p { color: var(--texto-2); font-size: .95rem; margin: 0 0 1.4rem; line-height: 1.5; }
 
 /* ---------- uploader ---------- */
 [data-testid="stFileUploader"] label p { font-weight: 600; color: var(--texto); }
 [data-testid="stFileUploaderDropzone"] {
-    background: linear-gradient(var(--vidro-forte), var(--vidro-forte)) padding-box,
-                linear-gradient(120deg, rgba(139,92,246,.55), rgba(236,72,153,.35), rgba(34,211,238,.5)) border-box;
-    border: 1.5px dashed transparent; border-radius: 18px; padding: 2.4rem 1.6rem; transition: all .2s ease;
+    background: var(--superficie); border: 1.5px dashed var(--borda); border-radius: 12px; padding: 2rem 1.4rem;
+    transition: border-color .15s ease;
 }
-[data-testid="stFileUploaderDropzone"]:hover { box-shadow: 0 0 0 4px rgba(139,92,246,.12), 0 10px 40px -10px rgba(139,92,246,.45); }
+[data-testid="stFileUploaderDropzone"]:hover { border-color: var(--destaque); }
 
 /* ---------- botões ---------- */
 [data-testid="stBaseButton-primary"] {
-    background: var(--degrade) !important; background-size: 200% 100% !important; border: 0 !important;
-    color: #fff !important; font-weight: 600 !important; letter-spacing: .01em; min-height: 3rem; border-radius: 14px !important;
-    box-shadow: 0 10px 30px -10px rgba(139, 92, 246, .75), inset 0 1px 0 rgba(255,255,255,.25);
-    transition: background-position .5s ease, transform .15s ease, box-shadow .2s ease !important;
+    background: var(--destaque) !important; border: 0 !important; color: #14101f !important; font-weight: 600 !important;
+    border-radius: 10px !important; box-shadow: none !important; transition: background .15s ease !important;
 }
-[data-testid="stBaseButton-primary"]:hover { background-position: 100% 0 !important; transform: translateY(-1px);
-    box-shadow: 0 16px 40px -12px rgba(236, 72, 153, .7), inset 0 1px 0 rgba(255,255,255,.3); }
-[data-testid="stBaseButton-primary"]:active { transform: translateY(0); }
-[data-testid="stBaseButton-secondary"] { background: rgba(255,255,255,.04) !important; border: 1px solid var(--borda) !important; border-radius: 12px !important; }
-[data-testid="stBaseButton-secondary"]:hover { border-color: var(--borda-forte) !important; }
+[data-testid="stBaseButton-primary"]:hover { background: var(--destaque-hover) !important; }
+[data-testid="stBaseButton-primary"] p { color: #14101f !important; }
+[data-testid="stBaseButton-secondary"] {
+    background: transparent !important; border: 1px solid var(--borda) !important; border-radius: 10px !important; box-shadow: none !important;
+}
+[data-testid="stBaseButton-secondary"]:hover { border-color: var(--destaque) !important; color: var(--destaque) !important; }
 
 /* ---------- progresso, alertas, expander, tabela ---------- */
-[data-testid="stProgress"] div[role="progressbar"] > div { background: rgba(255,255,255,.06) !important; border-radius: 999px; }
-[data-testid="stProgress"] div[role="progressbar"] > div > div { background: var(--degrade) !important; border-radius: 999px; }
-[data-testid="stAlert"] { border-radius: 14px; backdrop-filter: blur(10px); border: 1px solid var(--borda); }
-[data-testid="stExpander"] details { background: var(--vidro); border: 1px solid var(--borda) !important; border-radius: 14px; }
-[data-testid="stDataFrame"] { border: 1px solid var(--borda); border-radius: 14px; overflow: hidden; }
+[data-testid="stProgress"] div[role="progressbar"] > div { background: var(--borda) !important; border-radius: 999px; }
+[data-testid="stProgress"] div[role="progressbar"] > div > div { background: var(--destaque) !important; border-radius: 999px; }
+[data-testid="stAlert"] { border-radius: 10px; }
+[data-testid="stExpander"] details { background: var(--superficie); border: 1px solid var(--borda) !important; border-radius: 10px; }
+[data-testid="stDataFrame"] { border: 1px solid var(--borda); border-radius: 10px; overflow: hidden; }
 
-/* ---------- métricas do lote ---------- */
-.metricas { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; margin: .4rem 0 1.1rem; }
-.metrica { padding: 1rem 1.15rem; border-radius: 16px; background: var(--vidro); border: 1px solid var(--borda); }
-.metrica small { display: block; color: var(--texto-2); font-size: .74rem; text-transform: uppercase; letter-spacing: .12em; }
-.metrica strong { display: block; margin-top: .35rem; font: 600 1.55rem 'Space Grotesk', sans-serif;
-    background: var(--degrade); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.metrica.erro strong { background: none; color: var(--erro); }
-@media (max-width: 760px) { .metricas { grid-template-columns: repeat(2, 1fr); } }
+/* ---------- resultado ---------- */
+.resultado-tit { font-size: 1.15rem; font-weight: 600; color: var(--texto); margin: .2rem 0 .1rem; }
+.resultado-sub { font-size: .85rem; color: var(--texto-2); margin: 0; }
+.resultado-sub b { color: var(--erro); font-weight: 600; }
 
 /* ---------- status do ambiente (sidebar) ---------- */
-.amb { display: flex; flex-direction: column; gap: .4rem; }
-.amb-item { display: flex; align-items: center; gap: .6rem; font-size: .85rem; padding: .5rem .7rem;
-    border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--borda); }
-.amb-item i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.amb-item.ok i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-.amb-item.alerta i { background: var(--alerta); box-shadow: 0 0 8px var(--alerta); }
-.amb-item.erro i { background: var(--erro); box-shadow: 0 0 8px var(--erro); }
+.amb { display: flex; flex-direction: column; gap: .35rem; }
+.amb-item { display: flex; align-items: center; gap: .6rem; font-size: .84rem; padding: .45rem .65rem;
+    border-radius: 8px; border: 1px solid var(--borda); }
+.amb-item i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.amb-item.ok i { background: var(--ok); }
+.amb-item.alerta i { background: var(--alerta); }
+.amb-item.erro i { background: var(--erro); }
 .amb-item em { margin-left: auto; font-style: normal; color: var(--texto-2); font-size: .74rem; }
-.detalhe-int { font-size: .78rem; color: var(--texto-2); padding: .55rem .7rem; border-radius: 10px;
-    background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.2); font-family: 'JetBrains Mono', monospace; }
-.mini-nome { font-size: .74rem; font-weight: 600; color: var(--texto); margin: .3rem 0 0; line-height: 1.3;
+.detalhe-int { font-size: .78rem; color: var(--texto-2); line-height: 1.5; margin-top: -.2rem; }
+
+/* ---------- grade de miniaturas ---------- */
+[data-testid="stImage"] img { border-radius: 8px; border: 1px solid var(--borda); }
+.mini-nome { font-size: .74rem; font-weight: 600; color: var(--texto); margin: .35rem 0 0; line-height: 1.3;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-info { font-size: .68rem; color: var(--texto-2); margin: 0 0 .35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-info a { color: var(--texto-2); }
 /* Em telas estreitas o Streamlit empilha as colunas; na grade de downloads mantém 3 por linha */
 @media (max-width: 640px) {
-    [data-testid="stExpanderDetails"] [data-testid="stHorizontalBlock"]:has(.mini-nome) { flex-wrap: wrap !important; gap: .5rem !important; }
-    [data-testid="stExpanderDetails"] [data-testid="stHorizontalBlock"]:has(.mini-nome) > [data-testid="stColumn"] {
+    [data-testid="stHorizontalBlock"]:has(.mini-nome) { flex-wrap: wrap !important; gap: .5rem !important; }
+    [data-testid="stHorizontalBlock"]:has(.mini-nome) > [data-testid="stColumn"] {
         flex: 0 0 calc(33.333% - .34rem) !important; min-width: 0 !important; width: calc(33.333% - .34rem) !important; }
 }
 </style>
@@ -879,35 +830,12 @@ def aplicar_estilo() -> None:
     html(ESTILO)
 
 
-def hero() -> None:
+def cabecalho() -> None:
     html(
         """
-        <div class="hero">
-            <span class="hero-tag"><i></i>Processamento local · nada sai da máquina</span>
+        <div class="topo">
             <h1>DeAI · Painel de processamento</h1>
-            <p>Remove metadados de proveniência e aplica o pipeline de pixels escolhido na barra lateral
-            a todas as imagens do lote — tudo em memória, entregue num único <b>.zip</b>.</p>
-            <div class="hero-chips">
-                <span class="chip"><b>EXIF</b> · <b>XMP</b> · <b>C2PA</b></span>
-                <span class="chip">Lote ilimitado</span>
-                <span class="chip">Relatório CSV com PSNR</span>
-                <span class="chip">PNG · JPG · WEBP</span>
-            </div>
-        </div>
-        """
-    )
-
-
-def passos_iniciais() -> None:
-    html(
-        """
-        <div class="passos">
-            <div class="passo"><div class="num">1</div><div class="tit">Envie as imagens</div>
-                <p>Arraste quantos arquivos quiser para a área acima.</p></div>
-            <div class="passo"><div class="num">2</div><div class="tit">Ajuste a intensidade</div>
-                <p>Escolha o perfil e a emulação de sensor na barra lateral.</p></div>
-            <div class="passo"><div class="num">3</div><div class="tit">Baixe o .zip</div>
-                <p>Imagens processadas + relatorio.csv com métricas por arquivo.</p></div>
+            <p>Envie as imagens, clique em processar e baixe cada uma limpa de metadados (EXIF, XMP, C2PA).</p>
         </div>
         """
     )
@@ -927,7 +855,7 @@ def gerar_miniatura(conteudo: bytes) -> bytes:
             fundo = Image.new("RGB", img.size, (255, 255, 255))
             fundo.paste(img, mask=img.convert("RGBA").split()[-1])
             img = fundo
-        caixa = Image.new("RGB", MINIATURA_CAIXA, (18, 18, 28))
+        caixa = Image.new("RGB", MINIATURA_CAIXA, (22, 22, 31))  # = --superficie
         caixa.paste(img, ((MINIATURA_CAIXA[0] - img.width) // 2, (MINIATURA_CAIXA[1] - img.height) // 2))
         saida = io.BytesIO()
         caixa.save(saida, format="JPEG", quality=78)
@@ -969,30 +897,42 @@ def grade_downloads(itens: list[dict]) -> None:
                     f"<p class='mini-info'>{info}</p>"
                 )
                 st.download_button(
-                    "⬇ Baixar",
+                    "Baixar",
                     data=item["bytes"],
                     file_name=item["nome"],
                     mime=item["mime"],
                     key=f"btn_dl_{indice}",
+                    type="primary",
+                    icon=":material/download:",
                     width="stretch",
                     on_click="ignore",
                 )
 
 
-def metricas_lote(lote: dict) -> None:
+def cabecalho_resultado(lote: dict) -> None:
+    """Título da grade com um resumo de uma linha e o .zip como ação secundária à direita."""
     psnrs = [l["psnr_db"] for l in lote["linhas"] if isinstance(l["psnr_db"], (int, float)) and l["psnr_db"] != float("inf")]
-    psnr_medio = f"{sum(psnrs) / len(psnrs):.1f} dB" if psnrs else "—"
-    classe_falhas = "metrica erro" if lote["falhas"] else "metrica"
-    html(
-        f"""
-        <div class="metricas">
-            <div class="metrica"><small>Processadas</small><strong>{lote['ok']}/{lote['total']}</strong></div>
-            <div class="{classe_falhas}"><small>Falhas</small><strong>{len(lote['falhas'])}</strong></div>
-            <div class="metrica"><small>PSNR médio</small><strong>{psnr_medio}</strong></div>
-            <div class="metrica"><small>Tempo total</small><strong>{lote['duracao']:.1f} s</strong></div>
-        </div>
-        """
+    partes = [f"{lote['duracao']:.1f} s"]
+    if psnrs:
+        partes.append(f"PSNR médio {sum(psnrs) / len(psnrs):.1f} dB")
+    if lote["falhas"]:
+        partes.append(f"<b>{len(lote['falhas'])} falha(s)</b>")
+
+    c_tit, c_zip = st.columns([3, 1], vertical_alignment="center")
+    c_tit.markdown(
+        f"<p class='resultado-tit'>Imagens prontas · {lote['ok']} de {lote['total']}</p>"
+        f"<p class='resultado-sub'>{' · '.join(partes)}</p>",
+        unsafe_allow_html=True,
     )
+    if lote["ok"] > 1:
+        c_zip.download_button(
+            f"Baixar todas (.zip · {len(lote['zip']) / (1024 * 1024):.1f} MB)",
+            data=lote["zip"],
+            file_name=lote["nome_zip"],
+            mime="application/zip",
+            width="stretch",
+            on_click="ignore",  # não dispara rerun ao baixar
+        )
 
 
 def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
@@ -1000,7 +940,8 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
     with st.sidebar:
         st.header("Configuração")
 
-        rotulo = st.select_slider("Intensidade", options=list(INTENSIDADES.keys()), value="Média (Padrão)")
+        # Padrões no efeito máximo de cada controle.
+        rotulo = st.selectbox("Intensidade", options=list(INTENSIDADES.keys()), index=3)
         strength = INTENSIDADES[rotulo]
         st.markdown(f'<div class="detalhe-int">{DETALHES_INTENSIDADE[strength]}</div>', unsafe_allow_html=True)
 
@@ -1012,10 +953,9 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
             help="Mantém os pixels intactos e remove apenas EXIF/XMP/C2PA. Requer ExifTool instalado.",
         )
 
-        st.divider()
-        st.subheader("Emulação de sensor óptico")
+        st.subheader("Sensor óptico")
         emular = st.toggle(
-            "Aplicar após o script",
+            "Aplicar emulação de câmera",
             value=True,
             disabled=somente_metadados,
             help="Aberração cromática, reamostragem bilinear→bicúbica, nitidez nas bordas e grão monocromático.",
@@ -1023,37 +963,35 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
         pos_processamento = None
         if emular and not somente_metadados:
             pos_processamento = {
-                "deslocamento_ca": st.select_slider("Aberração cromática (px)", options=[1, 2], value=1),
-                "escala_reamostragem": st.slider("Reamostragem (%)", 60, 95, 80, step=5) / 100,
-                "sigma_grao": st.slider("Grão monocromático (σ)", 0.0, 8.0, 3.0, step=0.5),
+                "deslocamento_ca": st.select_slider("Aberração cromática (px)", options=[1, 2], value=2),
+                "escala_reamostragem": st.slider(
+                    "Reamostragem (%)", 60, 95, 60, step=5, help="Quanto menor, mais forte: a imagem é reduzida mais antes de voltar ao tamanho."
+                ) / 100,
+                "sigma_grao": st.slider("Grão monocromático (σ)", 0.0, 8.0, 8.0, step=0.5),
             }
 
-        st.divider()
-        st.subheader("Ambiente")
-        itens = [
-            ("ok" if ambiente["script"] else "erro", f"scripts/{SCRIPT_NAME}", "pronto" if ambiente["script"] else "ausente"),
-            ("ok" if ambiente["libs_subprocesso"] else "erro", "Pillow + NumPy", "ok" if ambiente["libs_subprocesso"] else "faltando"),
-            ("ok" if ambiente["exiftool"] else "alerta", "ExifTool", "ok" if ambiente["exiftool"] else "opcional"),
-        ]
-        st.markdown(
-            '<div class="amb">'
-            + "".join(f'<div class="amb-item {classe}"><i></i>{nome}<em>{estado}</em></div>' for classe, nome, estado in itens)
-            + "</div>",
-            unsafe_allow_html=True,
-        )
-        if ambiente["exiftool"]:
-            st.caption(f"ExifTool: `{ambiente['exiftool']}`")
-        if not ambiente["exiftool"]:
-            st.caption(
-                "Sem ExifTool o pipeline completo ainda sai sem EXIF/C2PA (a imagem é reconstruída pixel a pixel), "
-                "mas o modo só-metadados fica indisponível. Windows: `winget install OliverBetz.ExifTool`."
+        st.subheader("Mais")
+        with st.expander("Ambiente", expanded=not (ambiente["script"] and ambiente["libs_subprocesso"])):
+            itens = [
+                ("ok" if ambiente["script"] else "erro", f"scripts/{SCRIPT_NAME}", "pronto" if ambiente["script"] else "ausente"),
+                ("ok" if ambiente["libs_subprocesso"] else "erro", "Pillow + NumPy", "ok" if ambiente["libs_subprocesso"] else "faltando"),
+                ("ok" if ambiente["exiftool"] else "alerta", "ExifTool", "ok" if ambiente["exiftool"] else "opcional"),
+            ]
+            st.markdown(
+                '<div class="amb">'
+                + "".join(f'<div class="amb-item {classe}"><i></i>{nome}<em>{estado}</em></div>' for classe, nome, estado in itens)
+                + "</div>",
+                unsafe_allow_html=True,
             )
-        st.caption(f"Python: `{sys.executable}`")
+            if not ambiente["exiftool"]:
+                st.caption(
+                    "Sem ExifTool o pipeline completo ainda sai sem EXIF/C2PA (a imagem é reconstruída pixel a pixel), "
+                    "mas o modo só-metadados fica indisponível. Windows: `winget install OliverBetz.ExifTool`."
+                )
+            st.caption(f"Python: `{sys.executable}`")
 
-        st.divider()
-        st.subheader("⚡ Nuvem Supabase")
         salvar_sb = st.toggle(
-            "Ativar Supabase",
+            "Salvar no Supabase",
             value=st.session_state.get("usar_supabase", False),
             help="Envia as imagens processadas para o Supabase Storage e salva histórico no Postgres.",
         )
@@ -1090,7 +1028,7 @@ def barra_lateral(ambiente: dict) -> tuple[str, bool, dict | None]:
 def main() -> None:
     st.set_page_config(page_title="DeAI · Painel", page_icon="◐", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
-    hero()
+    cabecalho()
 
     # Falhas de ambiente que impedem qualquer processamento: avisa e para aqui.
     if not DEPENDENCIAS_OK:
@@ -1116,7 +1054,6 @@ def main() -> None:
 
     if not arquivos:
         st.session_state.pop("lote", None)
-        passos_iniciais()
         return
 
     # Se a seleção de arquivos mudar, o ZIP anterior deixa de valer.
@@ -1129,12 +1066,16 @@ def main() -> None:
     tamanho_total_mb = sum(arquivo.size for arquivo in arquivos) / (1024 * 1024)
     st.caption(f"{len(arquivos)} arquivo(s) selecionado(s) · {tamanho_total_mb:.1f} MB")
 
-    acao = "Remover metadados" if somente_metadados else f"Processar ({strength})"
-    if st.button(f"{acao} · {len(arquivos)} imagem(ns)", type="primary", width="stretch"):
-        mensagem = st.empty()
-        barra = st.progress(0.0)
-        with st.expander("Log do arquivo em processamento", expanded=False):
-            painel_log = st.empty()
+    acao = "Remover metadados" if somente_metadados else "Processar"
+    rotulo_qtd = "1 imagem" if len(arquivos) == 1 else f"{len(arquivos)} imagens"
+    if st.button(f"{acao} · {rotulo_qtd}", type="primary", width="stretch"):
+        # Tudo do andamento fica num só bloco, apagado ao terminar para a grade ficar logo abaixo do botão.
+        andamento = st.empty()
+        with andamento.container():
+            mensagem = st.empty()
+            barra = st.progress(0.0)
+            with st.expander("Log do arquivo em processamento", expanded=False):
+                painel_log = st.empty()
 
         try:
             lote = processar_lote(
@@ -1150,6 +1091,7 @@ def main() -> None:
             st.error(f"Falha ao montar o lote: {erro}")
             return
 
+        andamento.empty()
         lote["assinatura"] = assinatura
         lote["nome_zip"] = f"lote_processado_{datetime.now():%Y%m%d_%H%M%S}.zip"
         # Guardado na sessão para sobreviver aos reruns do Streamlit.
@@ -1159,56 +1101,35 @@ def main() -> None:
         return
 
     # ------------------------------------------------------------- resultado do lote
-    metricas_lote(lote)
+    st.divider()
     if lote["ok"] == 0:
         st.error("Nenhuma imagem foi processada. Veja os erros abaixo.")
-    elif lote["falhas"]:
-        st.warning(
-            f"{lote['ok']} de {lote['total']} imagens processadas em {lote['duracao']:.1f} s. "
-            f"{len(lote['falhas'])} falharam e ficaram fora do ZIP."
-        )
     else:
-        st.success(
-            f"Lote concluído: {lote['total']} imagens em {lote['duracao']:.1f} s. "
-            "Nenhum arquivo temporário ficou no disco; o ZIP foi montado na memória."
-        )
+        cabecalho_resultado(lote)
+        grade_downloads(lote["itens_processados"])
 
-    if lote["ok"]:
-        st.download_button(
-            f"Baixar lote (.zip · {len(lote['zip']) / (1024 * 1024):.1f} MB)",
-            data=lote["zip"],
-            file_name=lote["nome_zip"],
-            mime="application/zip",
-            type="primary",
+    with st.expander("Relatório técnico", expanded=False):
+        st.dataframe(
+            lote["linhas"],
+            hide_index=True,
             width="stretch",
-            on_click="ignore",  # não dispara rerun ao baixar
+            column_config={
+                "arquivo": "Arquivo",
+                "status": "Status",
+                "saida": "Nome no ZIP",
+                "modo": "Modo",
+                "url_publica": st.column_config.LinkColumn("Link Supabase", display_text="Abrir imagem"),
+                "kb_antes": st.column_config.NumberColumn("KB antes", format="%.1f"),
+                "kb_depois": st.column_config.NumberColumn("KB depois", format="%.1f"),
+                "psnr_db": st.column_config.NumberColumn(
+                    "PSNR (dB)", format="%.1f", help="Acima de ~40 dB a diferença é praticamente invisível; inf = pixels idênticos."
+                ),
+                "metadados_antes": "Metadados antes",
+                "metadados_depois": "Metadados depois",
+                "segundos": st.column_config.NumberColumn("Tempo (s)", format="%.1f"),
+            },
         )
-
-    if lote.get("itens_processados"):
-        with st.expander(f"📥 Baixar imagens individualmente ({len(lote['itens_processados'])})", expanded=True):
-            grade_downloads(lote["itens_processados"])
-
-    st.dataframe(
-        lote["linhas"],
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "arquivo": "Arquivo",
-            "status": "Status",
-            "saida": "Nome no ZIP",
-            "modo": "Modo",
-            "url_publica": st.column_config.LinkColumn("Link Supabase", display_text="Abrir imagem"),
-            "kb_antes": st.column_config.NumberColumn("KB antes", format="%.1f"),
-            "kb_depois": st.column_config.NumberColumn("KB depois", format="%.1f"),
-            "psnr_db": st.column_config.NumberColumn(
-                "PSNR (dB)", format="%.1f", help="Acima de ~40 dB a diferença é praticamente invisível; inf = pixels idênticos."
-            ),
-            "metadados_antes": "Metadados antes",
-            "metadados_depois": "Metadados depois",
-            "segundos": st.column_config.NumberColumn("Tempo (s)", format="%.1f"),
-        },
-    )
-    st.caption("O ZIP inclui um relatorio.csv com esta mesma tabela.")
+        st.caption("O ZIP inclui um relatorio.csv com esta mesma tabela.")
 
     if lote["falhas"]:
         with st.expander(f"Erros ({len(lote['falhas'])})", expanded=lote["ok"] == 0):
