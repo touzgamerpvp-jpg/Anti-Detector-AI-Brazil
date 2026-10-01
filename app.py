@@ -43,6 +43,7 @@ import threading
 import time
 import zipfile
 from datetime import datetime
+from html import escape as escapar_html
 from pathlib import Path
 
 import streamlit as st
@@ -855,6 +856,16 @@ code, pre, .stCode { font-family: 'JetBrains Mono', ui-monospace, monospace !imp
 .amb-item em { margin-left: auto; font-style: normal; color: var(--texto-2); font-size: .74rem; }
 .detalhe-int { font-size: .78rem; color: var(--texto-2); padding: .55rem .7rem; border-radius: 10px;
     background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.2); font-family: 'JetBrains Mono', monospace; }
+.mini-nome { font-size: .74rem; font-weight: 600; color: var(--texto); margin: .3rem 0 0; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-info { font-size: .68rem; color: var(--texto-2); margin: 0 0 .35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-info a { color: var(--texto-2); }
+/* Em telas estreitas o Streamlit empilha as colunas; na grade de downloads mantém 3 por linha */
+@media (max-width: 640px) {
+    [data-testid="stExpanderDetails"] [data-testid="stHorizontalBlock"]:has(.mini-nome) { flex-wrap: wrap !important; gap: .5rem !important; }
+    [data-testid="stExpanderDetails"] [data-testid="stHorizontalBlock"]:has(.mini-nome) > [data-testid="stColumn"] {
+        flex: 0 0 calc(33.333% - .34rem) !important; min-width: 0 !important; width: calc(33.333% - .34rem) !important; }
+}
 </style>
 """
 
@@ -900,6 +911,72 @@ def passos_iniciais() -> None:
         </div>
         """
     )
+
+
+MINIATURA_CAIXA = (240, 300)
+COLUNAS_GRADE = 6
+
+
+@st.cache_data(show_spinner=False, max_entries=2000)
+def gerar_miniatura(conteudo: bytes) -> bytes:
+    """JPEG pequeno (~10 KB) para a grade, centralizado numa caixa fixa para todas as células terem a mesma altura."""
+    try:
+        img = Image.open(io.BytesIO(conteudo))
+        img.thumbnail(MINIATURA_CAIXA)
+        if img.mode != "RGB":
+            fundo = Image.new("RGB", img.size, (255, 255, 255))
+            fundo.paste(img, mask=img.convert("RGBA").split()[-1])
+            img = fundo
+        caixa = Image.new("RGB", MINIATURA_CAIXA, (18, 18, 28))
+        caixa.paste(img, ((MINIATURA_CAIXA[0] - img.width) // 2, (MINIATURA_CAIXA[1] - img.height) // 2))
+        saida = io.BytesIO()
+        caixa.save(saida, format="JPEG", quality=78)
+        return saida.getvalue()
+    except Exception:
+        return conteudo
+
+
+def grade_downloads(itens: list[dict]) -> None:
+    """Grade compacta de miniaturas com botão de download, paginada para lotes grandes."""
+    total = len(itens)
+    por_pagina = COLUNAS_GRADE * 5
+    if total > por_pagina:
+        c_tam, c_pag, c_info = st.columns([1, 1, 2], vertical_alignment="bottom")
+        por_pagina = c_tam.selectbox("Por página", [30, 60, 120], key="grade_por_pagina")
+        paginas = -(-total // por_pagina)
+        if st.session_state.get("grade_pagina", 1) > paginas:  # lote novo menor ou "por página" maior
+            st.session_state["grade_pagina"] = paginas
+        pagina =c_pag.number_input("Página", min_value=1, max_value=paginas, value=1, step=1, key="grade_pagina")
+        inicio = (pagina - 1) * por_pagina
+        c_info.caption(f"Mostrando {inicio + 1}–{min(inicio + por_pagina, total)} de {total} imagens")
+    else:
+        inicio = 0
+
+    pagina_itens = itens[inicio : inicio + por_pagina]
+    for linha in range(0, len(pagina_itens), COLUNAS_GRADE):
+        cols = st.columns(COLUNAS_GRADE)
+        for c_idx, item in enumerate(pagina_itens[linha : linha + COLUNAS_GRADE]):
+            indice = inicio + linha + c_idx
+            with cols[c_idx]:
+                st.image(gerar_miniatura(item["bytes"]), width="stretch")
+                # Nomes do lote costumam ter o mesmo prefixo: mostra o final, que é o que diferencia
+                nome = item["nome"] if len(item["nome"]) <= 22 else "…" + item["nome"][-21:]
+                info = f"{item['kb']:.0f} KB" + (f" · {item['psnr']} dB" if item.get("psnr") else "")
+                if item.get("url_publica"):
+                    info += f" · <a href='{escapar_html(item['url_publica'])}' target='_blank'>link</a>"
+                html(
+                    f"<p class='mini-nome' title='{escapar_html(item['nome'])}'>{escapar_html(nome)}</p>"
+                    f"<p class='mini-info'>{info}</p>"
+                )
+                st.download_button(
+                    "⬇ Baixar",
+                    data=item["bytes"],
+                    file_name=item["nome"],
+                    mime=item["mime"],
+                    key=f"btn_dl_{indice}",
+                    width="stretch",
+                    on_click="ignore",
+                )
 
 
 def metricas_lote(lote: dict) -> None:
@@ -1109,32 +1186,7 @@ def main() -> None:
 
     if lote.get("itens_processados"):
         with st.expander(f"📥 Baixar imagens individualmente ({len(lote['itens_processados'])})", expanded=True):
-            st.markdown(
-                "<p style='color: var(--texto-2); font-size: 0.88rem; margin-bottom: 0.8rem;'>"
-                "Clique no botão de cada imagem para baixar o arquivo individual correspondente:"
-                "</p>",
-                unsafe_allow_html=True,
-            )
-            itens = lote["itens_processados"]
-            num_cols = min(3, max(1, len(itens)))
-            for i in range(0, len(itens), num_cols):
-                cols = st.columns(num_cols)
-                for c_idx, item in enumerate(itens[i : i + num_cols]):
-                    with cols[c_idx]:
-                        st.image(item["bytes"], use_container_width=True)
-                        rotulo_psnr = f" · PSNR {item['psnr']} dB" if item.get("psnr") else ""
-                        st.caption(f"**{item['nome']}**\n{item['kb']} KB{rotulo_psnr}")
-                        st.download_button(
-                            label=f"⬇️ Baixar imagem",
-                            data=item["bytes"],
-                            file_name=item["nome"],
-                            mime=item["mime"],
-                            key=f"btn_dl_{item['nome']}_{i}_{c_idx}",
-                            use_container_width=True,
-                            on_click="ignore",
-                        )
-                        if item.get("url_publica"):
-                            st.link_button("🌐 Abrir no Supabase", item["url_publica"], use_container_width=True)
+            grade_downloads(lote["itens_processados"])
 
     st.dataframe(
         lote["linhas"],
